@@ -24,7 +24,6 @@ def process_img():
 @app.route("/", defaults={"path": "index.html"})
 @app.route("/<path:path>")
 def getApp(path):
-    print('here')
     return app.send_static_file(path)
 
 if __name__ == '__main__':

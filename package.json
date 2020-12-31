@@ -1,0 +1,11 @@
+{
+	"name": "hand-draw",
+	"description": "root only",
+	"version": "0.1.0",
+	"engines": {
+		"yarn": "1.22.5"
+	},
+	"scripts": {
+		"postinstall": "cd ./client && yarn install && yarn build && mkdir ../server/static && mv build ../server/static/build"
+	}
+}

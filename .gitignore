@@ -130,3 +130,5 @@ dmypy.json
 
 # Test input folder
 /TestInput
+
+/server/static
