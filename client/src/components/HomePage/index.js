@@ -1,54 +1,76 @@
 import React, { useState, useRef } from "react";
-import "./styles.css";
-import { getDrawingSteps } from '../../utils/services'
-import { draw } from '../../utils/draw'
+import { getDrawingSteps } from "../../utils/services";
+import { draw } from "../../utils/draw";
+import { Page } from "./styles";
+import { SideBar } from "../SideBar";
+import { Button, CircularProgress } from "@material-ui/core";
+import { ThemeProvider } from "@material-ui/core/styles";
+import { theme } from "./util";
 
 const canvasSize = {
-  width: 500,
-  height: 500
-}
+	width: 500,
+	height: 500,
+};
 
 const HomePage = (props) => {
-  const [fileUrl, setFileUrl] = useState(null);
-  const [fetchStatus, setFetchStatus ] = useState(null)
-  const imgInputRef = useRef(null)
-  const canvasRef = useRef(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [fetchStatus, setFetchStatus] = useState(null);
+  const [isDrawing, setIsDrawing] = useState(false)
+	const [file, setFile] = useState(null);
+	const canvasRef = useRef(null);
 
-  const handleOnInputChange = (event) => {
-    if (event.target.files[0]) {
-      setFileUrl(URL.createObjectURL(event.target.files[0]))
-    }
-  }
+	const handleOnDraw = async (event) => {
+    if (!file) return;
+    setIsLoading(true)
+		const data = await getDrawingSteps(file);
+		const { steps, time } = data || {};
+		setFetchStatus(data && time ? `Took ${time.toFixed(1)} seconds` : "Fetch error");
+    setIsLoading(false)
 
-  const handleOnSubmit = async (event) => {
-    const file = imgInputRef.current.files[0]
-    if (!file) return
-    setFetchStatus("Loading...")
-    const data = await getDrawingSteps(file)
-    const { steps, time } = data || {}
-    setFetchStatus(data && time ? `${time} seconds` : "Fetch error")
-
-    if (steps) {
-      draw(canvasRef.current, steps)
-    }
-  }
+		if (steps) {
+      setIsDrawing(true)
+      await draw(canvasRef.current, steps);
+      setIsDrawing(false)
+		}
+	};
 
 	return (
-		<div>
-			<input
-        ref={imgInputRef}
-				type="file"
-				accept="image/*"
-				alt="No Image"
-				onChange={handleOnInputChange}
-			/>
-			<input type="submit" onClick={handleOnSubmit} />
-      {fetchStatus && <span>{fetchStatus}</span>}
-			<div>
-				<img id="img" src={fileUrl} alt=""/>
-				<canvas ref={canvasRef} id="canvas" width={canvasSize.width} height={canvasSize.height}/>
-			</div>
-		</div>
+		<ThemeProvider theme={theme}>
+			<Page>
+				<section className="toolbar">
+					<div className="toolbar-left">
+            <img src="logo128.png" width="24px" height="24px"/>
+						<span>H.D</span>
+					</div>
+					<div>
+						{!isLoading && fetchStatus && <span>{fetchStatus}</span>}
+            {isLoading && <CircularProgress size={24}/>}
+					</div>
+					<div className="toolbar-right">
+						<Button
+							variant="contained"
+							color="primary"
+							onClick={handleOnDraw}
+							disabled={!file || isLoading || isDrawing}
+						>
+							Draw
+						</Button>
+					</div>
+				</section>
+				<div className="wrapper">
+					<SideBar onFileLoad={(file) => setFile(file)} />
+					<section className="output-container">
+            <div className="canvas-container">
+              <canvas
+                ref={canvasRef}
+                width={canvasSize.width}
+                height={canvasSize.height}
+              />
+            </div>
+					</section>
+				</div>
+			</Page>
+		</ThemeProvider>
 	);
 };
 
