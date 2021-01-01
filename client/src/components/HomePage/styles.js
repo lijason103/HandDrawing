@@ -36,12 +36,13 @@ export const Page = styled.div`
     flex: 1;
     justify-content: center;
     align-items: center;
-		background-color: #eeeeee;
-
+    background-color: #eeeeee;
+    
     .canvas-container {
       background-color: #fff;
       padding: 8px;
     }
+
 
 		canvas {
 			width: 500px;

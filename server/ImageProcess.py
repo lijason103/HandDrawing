@@ -3,16 +3,73 @@ import numpy as np
 import kdtree
 import operator
 
+
+def getPreview(file, blur):
+    scale = 1
+    detail = 1
+
+    # Load image
+    npimg = np.fromstring(file, np.uint8)
+    img = cv2.imdecode(npimg, cv2.IMREAD_COLOR)
+    img_shape = img.shape
+
+    dim = [500, 500]
+    startX = ((1 - scale) / 2)*dim[0] 
+    startY = ((1 - scale) / 2)*dim[1] 
+    dim = (dim[0] * scale, dim[1] * scale)
+
+    # fit the picture into this section of the screen
+    if img_shape[1] > img_shape[0]:
+        # if it's taller that it is wide, truncate the wide section
+        dim = (int(dim[1] * (img_shape[0] / img_shape[1])), dim[1])
+    else:
+        # if it's wider than it is tall, truncate the tall section
+        dim = (dim[0], int(dim[0] *(img_shape[1] / img_shape[0])))
+
+    # Get dimension to translate picture. Dimension 1 and 0 are switched due to comp dimensions
+    ratio = img.shape[0] / img.shape[1]
+    pseudo_x = int(img.shape[1] * detail)
+    pseudoDim = (pseudo_x, int(pseudo_x * ratio))
+
+    drawing = process_image(img, pseudoDim, blur)
+    _, encodedDrawing  = cv2.imencode('.jpg', drawing)
+    return encodedDrawing
+
+def process_image(img, pseudoDim, blur):
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    if blur == 4:
+        gray = cv2.GaussianBlur(gray, (21, 21), 0)
+        canny = cv2.Canny(gray, 25, 45)
+    elif blur == 3:
+        gray = cv2.GaussianBlur(gray, (11, 11), 0)
+        canny = cv2.Canny(gray, 25, 45)
+    elif blur == 2:
+        gray = cv2.GaussianBlur(gray, (9, 9), 0)
+        canny = cv2.Canny(gray, 25, 45)
+    elif blur == 1:
+        gray = cv2.GaussianBlur(gray, (3, 3), 0)
+        canny = cv2.Canny(gray, 25, 45)
+    else:  # no blur
+        canny = cv2.Canny(gray, 50, 75)
+    canny = rescale(canny, pseudoDim)
+    r, res = cv2.threshold(canny, 50, 255, cv2.THRESH_BINARY_INV)
+    return res
+
+def rescale(img, dim):
+    resized = cv2.resize(img, dim, interpolation=cv2.INTER_AREA)
+    return resized
+
+
 class AutoDraw(object):
     def __init__(self, name, blur = 0):
         # Tunable parameters
         self.detail = 1
         # self.scale = 7/12
         self.scale = 12/12
-        self.sketch_before = False
-        self.with_color = True
-        self.num_colors = 10
-        self.outline_again = False
+        # self.sketch_before = False
+        # self.with_color = True
+        # self.num_colors = 10
+        # self.outline_again = False
 
         # Load Image. Switch axes to match computer screen
         self.img = self.load_img(name)
@@ -72,7 +129,7 @@ class AutoDraw(object):
     def process_img(self, img):
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         if self.blur == 4:
-            gray = cv2.GaussianBlur(gray, (13, 13), 0)
+            gray = cv2.GaussianBlur(gray, (21, 21), 0)
             canny = cv2.Canny(gray, 25, 45)
         elif self.blur == 3:
             gray = cv2.GaussianBlur(gray, (11, 11), 0)
