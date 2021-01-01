@@ -4,7 +4,11 @@ import kdtree
 import operator
 
 
-def getPreview(file, blur):
+GAUSSIAN_BLUR_KERNEL_SIZES = [3, 9, 11, 21]
+CANNY_LOWER_THRESHOLDS = [1, 21, 25, 50]
+
+
+def getPreview(file, blurLevel, cannyThresholdLevel):
     scale = 1
     detail = 1
 
@@ -31,26 +35,17 @@ def getPreview(file, blur):
     pseudo_x = int(img.shape[1] * detail)
     pseudoDim = (pseudo_x, int(pseudo_x * ratio))
 
-    drawing = process_image(img, pseudoDim, blur)
+    drawing = process_image(img, pseudoDim, blurLevel, cannyThresholdLevel)
     _, encodedDrawing  = cv2.imencode('.jpg', drawing)
     return encodedDrawing
 
-def process_image(img, pseudoDim, blur):
+def process_image(img, pseudoDim, blurLevel=3, cannyThresholdLevel=1):
+    blur = GAUSSIAN_BLUR_KERNEL_SIZES[blurLevel]
+    cannyThreshold = CANNY_LOWER_THRESHOLDS[cannyThresholdLevel]
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    if blur == 4:
-        gray = cv2.GaussianBlur(gray, (21, 21), 0)
-        canny = cv2.Canny(gray, 25, 45)
-    elif blur == 3:
-        gray = cv2.GaussianBlur(gray, (11, 11), 0)
-        canny = cv2.Canny(gray, 25, 45)
-    elif blur == 2:
-        gray = cv2.GaussianBlur(gray, (9, 9), 0)
-        canny = cv2.Canny(gray, 25, 45)
-    elif blur == 1:
-        gray = cv2.GaussianBlur(gray, (3, 3), 0)
-        canny = cv2.Canny(gray, 25, 45)
-    else:  # no blur
-        canny = cv2.Canny(gray, 50, 75)
+
+    gray = cv2.GaussianBlur(gray, (blur, blur), 0)
+    canny = cv2.Canny(gray, cannyThreshold, 3*cannyThreshold)
     canny = rescale(canny, pseudoDim)
     r, res = cv2.threshold(canny, 50, 255, cv2.THRESH_BINARY_INV)
     return res
@@ -61,7 +56,7 @@ def rescale(img, dim):
 
 
 class AutoDraw(object):
-    def __init__(self, name, blur = 0):
+    def __init__(self, name, blurLevel, cannyThresholdLevel):
         # Tunable parameters
         self.detail = 1
         # self.scale = 7/12
@@ -73,7 +68,6 @@ class AutoDraw(object):
 
         # Load Image. Switch axes to match computer screen
         self.img = self.load_img(name)
-        self.blur = blur
         self.img = np.swapaxes(self.img, 0, 1)
         self.img_shape = self.img.shape
 
@@ -104,7 +98,7 @@ class AutoDraw(object):
         self.curr_delta = self.maps[self.momentum]
 
         # Create Outline
-        self.drawing = self.process_img(self.img)
+        self.drawing = process_image(self.img, self.pseudoDim, blurLevel, cannyThresholdLevel)
         # self.show()
 
     def show(self):
@@ -117,35 +111,10 @@ class AutoDraw(object):
         return img
         # return cv2.imread(name)
 
-    def rescale(self, img, dim):
-        resized = cv2.resize(img, dim, interpolation=cv2.INTER_AREA)
-        return resized
-
     def translate(self, coord):
         ratio = (coord[0] / self.pseudoDim[1], coord[1] / self.pseudoDim[0]) # this is correct
         deltas = (int(ratio[0] * self.dim[0]), int(ratio[1] * self.dim[1]))
         return self.startX + deltas[0], self.startY + deltas[1]
-
-    def process_img(self, img):
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        if self.blur == 4:
-            gray = cv2.GaussianBlur(gray, (21, 21), 0)
-            canny = cv2.Canny(gray, 25, 45)
-        elif self.blur == 3:
-            gray = cv2.GaussianBlur(gray, (11, 11), 0)
-            canny = cv2.Canny(gray, 25, 45)
-        elif self.blur == 2:
-            gray = cv2.GaussianBlur(gray, (9, 9), 0)
-            canny = cv2.Canny(gray, 25, 45)
-        elif self.blur == 1:
-            gray = cv2.GaussianBlur(gray, (3, 3), 0)
-            canny = cv2.Canny(gray, 25, 45)
-        else:  # no blur
-            canny = cv2.Canny(gray, 50, 75)
-        canny = self.rescale(canny, self.pseudoDim)
-        r, res = cv2.threshold(canny, 50, 255, cv2.THRESH_BINARY_INV)
-
-        return res
 
     def drawOutline(self):
         indices = np.argwhere(self.drawing < 127).tolist()  # get the black colors

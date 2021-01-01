@@ -13,13 +13,22 @@ const canvasSize = {
 	height: 500,
 };
 
+const defaultBlurLevel = 3;
+const defaultCannyThresholdLevel = 1;
+
 const HomePage = (props) => {
 	const [isLoading, setIsLoading] = useState(false);
 	const [fetchStatus, setFetchStatus] = useState(null);
 	const [isDrawing, setIsDrawing] = useState(false);
 	const [file, setFile] = useState(null);
+
 	const [previewImg, setPreviewImg] = useState(null);
-	const [previewSettings, setPreviewSettings] = useState({ blurLevel: 4 });
+	const [previewSettings, setPreviewSettings] = useState({
+		blurLevel: defaultBlurLevel,
+		cannyThresholdLevel: defaultCannyThresholdLevel,
+	});
+	const [isPreviewLoading, setIsPreviewLoading] = useState(false);
+
 	const canvasRef = useRef(null);
 
 	const handleOnDraw = async (event) => {
@@ -40,13 +49,15 @@ const HomePage = (props) => {
 	};
 
 	const handleOnPreviewCommit = async () => {
+    setIsPreviewLoading(true)
 		const blobURL = await getPreview(file, previewSettings);
-		setPreviewImg(blobURL);
-  };
-  
-  const handleOnPreviewSettingsChange = (newSettings) => {
-    setPreviewSettings({ ...previewSettings, ...newSettings })
-  }
+    setPreviewImg(blobURL);
+    setIsPreviewLoading(false)
+	};
+
+	const handleOnPreviewSettingsChange = (newSettings) => {
+		setPreviewSettings({ ...previewSettings, ...newSettings });
+	};
 
 	const handleOnFileLoad = (file) => {
 		setFile(file);
@@ -81,8 +92,9 @@ const HomePage = (props) => {
 						onFileLoad={handleOnFileLoad}
 						previewImg={previewImg}
 						onPreviewCommit={handleOnPreviewCommit}
-            previewSettings={previewSettings}
+						previewSettings={previewSettings}
             onPreviewSettingsChanged={handleOnPreviewSettingsChange}
+            isPreviewLoading={isPreviewLoading}
 					/>
 					<section className="output-container">
 						<div className="canvas-container">

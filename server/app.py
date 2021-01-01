@@ -6,13 +6,14 @@ app = Flask(__name__, static_folder='./static/build')
 
 @app.route("/api/preview", methods=["POST"])
 def preview():
-    blur_level = int(request.form['blur_level'])
+    blurLevel = int(request.form['blur_level'])
+    cannyThresholdLevel = int(request.form['canny_threshold_level'])
     file = request.files['img']
-    if (not file or not blur_level):
+    if (not file):
         return jsonify({ "error": "Missing img file or blur level" })
-
+    
     filestr = file.read()
-    encodedDrawing = ImageProcess.getPreview(filestr, blur_level)
+    encodedDrawing = ImageProcess.getPreview(filestr, blurLevel, cannyThresholdLevel)
     encodedBytes = encodedDrawing.tobytes()
     response = make_response(encodedBytes)
     response.headers.set('Content-Type', 'image/jpeg')
@@ -20,18 +21,17 @@ def preview():
 
 @app.route('/api/img', methods=["POST"])
 def process_img():
-    blur_level = int(request.form['blur_level'])
+    blurLevel = int(request.form['blur_level'])
+    cannyThresholdLevel = int(request.form['canny_threshold_level'])
     file = request.files['img']
-    if (not file or not blur_level):
+    if (not file):
         return jsonify({ "error": "Missing img file" })
 
-    print('Generating...')
     startTime = time.time()
     filestr = file.read()
-    autoDraw = ImageProcess.AutoDraw(filestr, blur_level)
+    autoDraw = ImageProcess.AutoDraw(filestr, blurLevel, cannyThresholdLevel)
     drawingSteps = autoDraw.drawOutline()
     totalTime = time.time() - startTime
-    print(f'Generating... Completed... {totalTime}')
     return jsonify({ 'steps': drawingSteps, 'time': totalTime })
 
 @app.route("/", defaults={"path": "index.html"})

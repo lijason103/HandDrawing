@@ -1,11 +1,11 @@
 export async function getDrawingSteps(file, settings) {
-	const { blurLevel } = settings || {}
-	if (!file || !blurLevel) return null
+	const { blurLevel, cannyThresholdLevel } = settings || {}
+	if (!file) return null
 
 	const formData = new FormData()
 	formData.append("img", file)
 	formData.append('blur_level', blurLevel)
-
+	formData.append('canny_threshold_level', cannyThresholdLevel)
 	let data
 	try {
 		const response = await fetch("/api/img", {
@@ -21,12 +21,13 @@ export async function getDrawingSteps(file, settings) {
 
 
 export async function getPreview(file, settings) {
-	const { blurLevel } = settings || {}
-	if (!file || !blurLevel) return null
-
+	const { blurLevel, cannyThresholdLevel } = settings || {}
+	if (!file) return null
+	
 	const formData = new FormData()
 	formData.append('img', file)
 	formData.append('blur_level', blurLevel)
+	formData.append('canny_threshold_level', cannyThresholdLevel)
 
 	let data
 	try {

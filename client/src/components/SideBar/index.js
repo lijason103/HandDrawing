@@ -1,13 +1,13 @@
 import React, { useState } from "react";
 import { Dropzone } from "../Dropzone";
 import { Section } from "./styles";
-import { Button, Slider } from "@material-ui/core";
+import { Button, Slider, CircularProgress } from "@material-ui/core";
 
-const BLUR_MARKS = [
-	{ value: 1, label: 1 },
-	{ value: 2, label: 2 },
-	{ value: 3, label: 3 },
-	{ value: 4, label: 4 },
+const MARKS = [
+	{ value: 0, label: 1 },
+	{ value: 1, label: 2 },
+	{ value: 2, label: 3 },
+	{ value: 3, label: 4 },
 ];
 
 export const SideBar = (props) => {
@@ -17,8 +17,9 @@ export const SideBar = (props) => {
 		onPreviewCommit,
 		previewSettings,
 		onPreviewSettingsChanged,
+		isPreviewLoading,
 	} = props;
-	const { blurLevel } = previewSettings;
+	const { blurLevel, cannyThresholdLevel } = previewSettings;
 	const [fileUrl, setFileUrl] = useState(null);
 
 	const handleOnDrop = (acceptedFiles) => {
@@ -27,6 +28,8 @@ export const SideBar = (props) => {
 		onFileLoad(file, blurLevel);
 	};
 
+	const isSettingDisabled = !previewImg || isPreviewLoading;
+
 	return (
 		<Section>
 			<div className="upload-container">
@@ -34,28 +37,52 @@ export const SideBar = (props) => {
 				<img src={fileUrl} alt="" />
 			</div>
 			<div className="settings-container">
-				{previewImg ? (
-					<img src={previewImg} alt="preview" />
-				) : (
-					<Button onClick={onPreviewCommit} disabled={!fileUrl}>
-						Preview
-					</Button>
-				)}
+				<div className="preview-container">
+					{previewImg && <img src={previewImg} alt="preview" />}
+					{isPreviewLoading && (
+						<CircularProgress className="progress-bar" size={24} />
+					)}
+					{!previewImg && (
+						<Button
+							variant="outlined"
+							onClick={onPreviewCommit}
+							disabled={!fileUrl || isPreviewLoading}
+						>
+							Preview
+						</Button>
+					)}
+				</div>
 				<div className="options">
-					<span>Blur level</span>
-					<Slider
-						aria-labelledby="discrete-slider-restrict"
-						value={blurLevel}
-						step={1}
-						marks={BLUR_MARKS}
-						min={1}
-						max={4}
-						disabled={!previewImg}
-						onChange={(event, value) =>
-							onPreviewSettingsChanged({ blurLevel: value })
-						}
-						onChangeCommitted={onPreviewCommit}
-					/>
+					<div className="slider">
+						<span>Blur Level</span>
+						<Slider
+							value={blurLevel}
+							step={1}
+							marks={MARKS}
+							min={0}
+							max={3}
+							disabled={isSettingDisabled}
+							onChange={(event, value) =>
+								onPreviewSettingsChanged({ blurLevel: value })
+							}
+							onChangeCommitted={onPreviewCommit}
+						/>
+					</div>
+					<div className="slider">
+						<span className="slider-name">Canny Threshold Level</span>
+						<Slider
+							value={cannyThresholdLevel}
+							step={1}
+							marks={MARKS}
+							min={0}
+							max={3}
+							disabled={isSettingDisabled}
+							onChange={(event, value) =>
+								onPreviewSettingsChanged({ cannyThresholdLevel: value })
+							}
+							onChangeCommitted={onPreviewCommit}
+						/>
+					</div>
 				</div>
 			</div>
 		</Section>
