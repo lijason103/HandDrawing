@@ -3,6 +3,7 @@ import { getDrawingSteps, getPreview } from "../../utils/services";
 import { draw } from "../../utils/draw";
 import { Page } from "./styles";
 import { SideBar } from "../SideBar";
+import { DrawControls } from "../DrawControls";
 import { Button, CircularProgress } from "@material-ui/core";
 import { ThemeProvider } from "@material-ui/core/styles";
 import { theme } from "./util";
@@ -29,6 +30,8 @@ const HomePage = (props) => {
 	});
 	const [isPreviewLoading, setIsPreviewLoading] = useState(false);
 
+	const [drawSettings, setDrawSettings] = useState({ lineWidth: 1, isLineDashOn: false });
+
 	const canvasRef = useRef(null);
 
 	const handleOnDraw = async (event) => {
@@ -43,16 +46,16 @@ const HomePage = (props) => {
 
 		if (steps) {
 			setIsDrawing(true);
-			await draw(canvasRef.current, steps);
+			await draw(canvasRef.current, steps, drawSettings);
 			setIsDrawing(false);
 		}
 	};
 
 	const handleOnPreviewCommit = async () => {
-    setIsPreviewLoading(true)
+		setIsPreviewLoading(true);
 		const blobURL = await getPreview(file, previewSettings);
-    setPreviewImg(blobURL);
-    setIsPreviewLoading(false)
+		setPreviewImg(blobURL);
+		setIsPreviewLoading(false);
 	};
 
 	const handleOnPreviewSettingsChange = (newSettings) => {
@@ -93,10 +96,18 @@ const HomePage = (props) => {
 						previewImg={previewImg}
 						onPreviewCommit={handleOnPreviewCommit}
 						previewSettings={previewSettings}
-            onPreviewSettingsChanged={handleOnPreviewSettingsChange}
-            isPreviewLoading={isPreviewLoading}
+						onPreviewSettingsChanged={handleOnPreviewSettingsChange}
+						isPreviewLoading={isPreviewLoading}
 					/>
 					<section className="output-container">
+						<div className="draw-controller">
+							<DrawControls
+								drawSettings={drawSettings}
+								onControlClick={(newSettings) =>
+									setDrawSettings({ ...drawSettings, ...newSettings })
+								}
+							/>
+						</div>
 						<div className="canvas-container">
 							<canvas
 								ref={canvasRef}

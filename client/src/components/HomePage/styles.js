@@ -37,16 +37,25 @@ export const Page = styled.div`
     justify-content: center;
     align-items: center;
     background-color: #eeeeee;
+    position: relative;
     
     .canvas-container {
       background-color: #fff;
       padding: 8px;
+      canvas {
+        width: 500px;
+        height: 500px;
+      }
+    }
+    
+    .draw-controller {
+      background-color: white;
+      position: absolute;
+      top: 0;
+      display: flex;
+      border: 1px #bdbdbd solid;
+      border-top: none;
     }
 
-
-		canvas {
-			width: 500px;
-			height: 500px;
-		}
 	}
 `;
