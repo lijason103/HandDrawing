@@ -7,6 +7,9 @@ import operator
 GAUSSIAN_BLUR_KERNEL_SIZES = [3, 9, 11, 21]
 CANNY_LOWER_THRESHOLDS = [1, 21, 25, 50]
 
+def getEncodedDrawing(drawing):
+    _, encodedDrawing = cv2.imencode('.jpg', drawing)
+    return encodedDrawing
 
 def getPreview(file, blurLevel, cannyThresholdLevel):
     scale = 1
@@ -36,8 +39,7 @@ def getPreview(file, blurLevel, cannyThresholdLevel):
     pseudoDim = (pseudo_x, int(pseudo_x * ratio))
 
     drawing = process_image(img, pseudoDim, blurLevel, cannyThresholdLevel)
-    _, encodedDrawing  = cv2.imencode('.jpg', drawing)
-    return encodedDrawing
+    return drawing
 
 def process_image(img, pseudoDim, blurLevel=3, cannyThresholdLevel=1):
     blur = GAUSSIAN_BLUR_KERNEL_SIZES[blurLevel]

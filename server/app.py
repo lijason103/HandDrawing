@@ -13,7 +13,14 @@ def preview():
         return jsonify({ "error": "Missing img file or blur level" })
     
     filestr = file.read()
-    encodedDrawing = ImageProcess.getPreview(filestr, blurLevel, cannyThresholdLevel)
+    drawing = ImageProcess.getPreview(filestr, blurLevel, cannyThresholdLevel)
+    ratio = drawing.shape[0] / drawing.shape[1]
+    scaledWidth = 200
+    scaledheight = int(ratio * scaledWidth)
+    drawing = ImageProcess.rescale(drawing, (scaledWidth, scaledheight))
+
+    encodedDrawing = ImageProcess.getEncodedDrawing(drawing)
+
     encodedBytes = encodedDrawing.tobytes()
     response = make_response(encodedBytes)
     response.headers.set('Content-Type', 'image/jpeg')
@@ -38,10 +45,3 @@ def process_img():
 @app.route("/<path:path>")
 def getApp(path):
     return app.send_static_file(path)
-
-# if __name__ == '__main__':
-#     import ImageProcess
-#     app.run(threaded=True, port=5000)
-# else:
-#     # For Prod
-#     from . import ImageProcess
